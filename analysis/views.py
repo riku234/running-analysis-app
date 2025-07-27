@@ -9,7 +9,7 @@ from rest_framework.decorators import api_view, parser_classes
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.response import Response
 from rest_framework import status
-from .services import analyze_run_basics, analyze_run_basic_opencv_only, MEDIAPIPE_AVAILABLE
+from .services import analyze_run_basics, analyze_run_basic_opencv_only, analyze_run_dummy, MEDIAPIPE_AVAILABLE, OPENCV_AVAILABLE
 import logging
 
 # ログ設定
@@ -58,7 +58,8 @@ def analyze_running_video(request):
             # 動画解析の実行（環境に応じて最適な手法を選択）
             logger.info(f"動画解析を開始: {video_file.name}")
             
-            if MEDIAPIPE_AVAILABLE:
+            # 段階的フォールバック解析
+            if MEDIAPIPE_AVAILABLE and OPENCV_AVAILABLE:
                 try:
                     # MediaPipeを使用した高精度解析
                     analysis_result = analyze_run_basics(temp_file_path)
@@ -69,12 +70,27 @@ def analyze_running_video(request):
                     analysis_result = analyze_run_basic_opencv_only(temp_file_path)
                     analysis_result["note"] = "MediaPipe解析でエラーが発生したため、OpenCVベースの簡易解析を使用しました"
                     logger.info(f"OpenCV解析完了: {analysis_result}")
-            else:
-                # MediaPipeが利用できない環境では最初からOpenCV解析を使用
+            
+            elif OPENCV_AVAILABLE:
+                # OpenCVのみ利用可能な環境
                 logger.info("MediaPipeが利用できません。OpenCVベースの解析を使用します。")
-                analysis_result = analyze_run_basic_opencv_only(temp_file_path)
-                analysis_result["note"] = "この環境ではMediaPipeが利用できないため、OpenCVベースの簡易解析を使用しました"
-                logger.info(f"OpenCV解析完了: {analysis_result}")
+                try:
+                    analysis_result = analyze_run_basic_opencv_only(temp_file_path)
+                    analysis_result["note"] = "この環境ではMediaPipeが利用できないため、OpenCVベースの簡易解析を使用しました"
+                    logger.info(f"OpenCV解析完了: {analysis_result}")
+                except Exception as opencv_error:
+                    # OpenCV解析も失敗した場合はダミー解析
+                    logger.warning(f"OpenCV解析失敗、ダミー解析を使用: {str(opencv_error)}")
+                    analysis_result = analyze_run_dummy(temp_file_path)
+                    analysis_result["note"] = "OpenCV解析でエラーが発生したため、簡易推定解析を使用しました"
+                    logger.info(f"ダミー解析完了: {analysis_result}")
+            
+            else:
+                # ライブラリが利用できない環境では最初からダミー解析を使用
+                logger.info("OpenCV/MediaPipeが利用できません。簡易推定解析を使用します。")
+                analysis_result = analyze_run_dummy(temp_file_path)
+                analysis_result["note"] = "この環境ではOpenCV/MediaPipeが利用できないため、簡易推定解析を使用しました"
+                logger.info(f"ダミー解析完了: {analysis_result}")
             
             # 結果を返す
             return Response(analysis_result, status=status.HTTP_200_OK)

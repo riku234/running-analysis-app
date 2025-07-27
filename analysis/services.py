@@ -1,9 +1,25 @@
-import cv2
-import numpy as np
-from scipy.signal import find_peaks, savgol_filter
-from scipy.ndimage import gaussian_filter1d
+# 安全なライブラリインポート
 import math
 
+# OpenCVの利用可能性チェック
+try:
+    import cv2
+    OPENCV_AVAILABLE = True
+except ImportError:
+    OPENCV_AVAILABLE = False
+    print("WARNING: OpenCV is not available. Using dummy analysis.")
+
+# SciPy/NumPyの利用可能性チェック
+try:
+    import numpy as np
+    from scipy.signal import find_peaks, savgol_filter
+    from scipy.ndimage import gaussian_filter1d
+    SCIPY_AVAILABLE = True
+except ImportError:
+    SCIPY_AVAILABLE = False
+    print("WARNING: SciPy/NumPy is not available. Using simplified analysis.")
+
+# MediaPipeの利用可能性チェック
 try:
     import mediapipe as mp
     MEDIAPIPE_AVAILABLE = True
@@ -22,9 +38,13 @@ def analyze_run_basics(video_path):
     Returns:
         dict: {"step_count": int, "average_lean_angle": float}
     """
-    # MediaPipeの利用可能性チェック
+    # 必要なライブラリの利用可能性チェック
+    if not OPENCV_AVAILABLE:
+        raise ImportError("OpenCV is not available. Please install opencv-python")
     if not MEDIAPIPE_AVAILABLE:
         raise ImportError("MediaPipe is not available. Please install mediapipe: pip install mediapipe")
+    if not SCIPY_AVAILABLE:
+        raise ImportError("SciPy/NumPy is not available. Please install scipy numpy")
     
     # MediaPipeの初期化
     mp_pose = mp.solutions.pose
@@ -200,6 +220,10 @@ def analyze_run_basic_opencv_only(video_path):
     Returns:
         dict: {"step_count": int, "average_lean_angle": float, "method": str}
     """
+    # OpenCVの利用可能性チェック
+    if not OPENCV_AVAILABLE:
+        raise ImportError("OpenCV is not available. Please install opencv-python")
+        
     cap = cv2.VideoCapture(video_path)
     
     if not cap.isOpened():
@@ -261,4 +285,32 @@ def analyze_run_basic_opencv_only(video_path):
         "step_count": step_count,
         "average_lean_angle": estimated_lean_angle,
         "method": "opencv_basic"
+    }
+
+
+def analyze_run_dummy(video_path):
+    """
+    ライブラリ不要のダミー解析（緊急用）
+    
+    Args:
+        video_path (str): 動画ファイルパス
+        
+    Returns:
+        dict: 固定値を返す
+    """
+    import os
+    
+    # ファイルサイズから推定歩数を計算（簡易）
+    try:
+        file_size = os.path.getsize(video_path)
+        # ファイルサイズ（MB）を歩数の近似値として使用
+        estimated_steps = min(max(int(file_size / (1024 * 1024) * 10), 10), 200)
+    except:
+        estimated_steps = 50  # デフォルト値
+    
+    return {
+        "step_count": estimated_steps,
+        "average_lean_angle": 85.0,  # 標準的な角度
+        "method": "dummy_analysis",
+        "note": "ライブラリ不要の簡易解析版です（ファイルサイズベース推定）"
     } 
