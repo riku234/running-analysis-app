@@ -91,6 +91,10 @@ USE_TZ = True
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
+# Ensure static files directory exists
+import os
+os.makedirs(STATIC_ROOT, exist_ok=True)
+
 # Media files
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'

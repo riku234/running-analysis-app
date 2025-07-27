@@ -1,0 +1,19 @@
+services:
+  # 最小構成バックエンド
+  - type: web
+    name: running-analysis-api-simple
+    env: python
+    plan: free
+    buildCommand: |
+      pip install --upgrade pip
+      pip install -r requirements-minimal.txt
+      python manage.py migrate --run-syncdb
+    startCommand: |
+      gunicorn running_analysis_project.wsgi:application --bind 0.0.0.0:$PORT
+    envVars:
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: "False"
+      - key: ALLOWED_HOSTS
+        value: "*" 
