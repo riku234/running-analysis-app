@@ -1,0 +1,31 @@
+services:
+  # バックエンド（Django API）- 専用版
+  - type: web
+    name: running-analysis-api-v2
+    env: python
+    plan: free
+    buildCommand: |
+      echo "=== バックエンドビルド開始 ==="
+      pip install --upgrade pip
+      pip install -r requirements-minimal.txt
+      python manage.py collectstatic --noinput
+      python manage.py migrate --run-syncdb
+      echo "=== バックエンドビルド完了 ==="
+    startCommand: |
+      echo "=== バックエンド起動開始 ==="
+      gunicorn running_analysis_project.wsgi:application --bind 0.0.0.0:$PORT --timeout 120
+      echo "=== バックエンド起動完了 ==="
+    envVars:
+      - key: DJANGO_SETTINGS_MODULE
+        value: running_analysis_project.settings
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: "False"
+      - key: ALLOWED_HOSTS
+        value: "running-analysis-api-v2.onrender.com,*.onrender.com,localhost,127.0.0.1"
+      - key: PORT
+        value: "10000"
+    healthCheckPath: /api/health/
+    healthCheckTimeout: 300
+    autoDeploy: true 

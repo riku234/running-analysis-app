@@ -28,10 +28,8 @@ function App() {
     const formData = new FormData();
     formData.append('video', selectedFile);
 
-    // API URL設定（複数のフォールバック）
-    const apiUrl = process.env.REACT_APP_API_URL || 
-                   'https://running-analysis-api.onrender.com' ||
-                   'https://running-analysis-app.onrender.com';
+    // API URL設定（新しいバックエンドURL）
+    const apiUrl = 'https://running-analysis-api-v2.onrender.com';
     
     try {
       const response = await axios.post(`${apiUrl}/api/analyze/`, formData, {
@@ -46,7 +44,9 @@ function App() {
       
       if (response.data && response.status === 200) {
         setAnalysisResult(response.data);
+        console.log('解析成功:', response.data);
       } else {
+        console.error('予期しないレスポンス:', response);
         setError('予期しないレスポンス形式です');
       }
     } catch (err) {
