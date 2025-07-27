@@ -28,18 +28,36 @@ function App() {
     const formData = new FormData();
     formData.append('video', selectedFile);
 
-    const apiUrl = process.env.REACT_APP_API_URL || 'https://running-analysis-app.onrender.com';
+    const apiUrl = process.env.REACT_APP_API_URL || 'https://running-analysis-api.onrender.com';
     
     try {
       const response = await axios.post(`${apiUrl}/api/analyze/`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
+        timeout: 30000, // 30秒タイムアウト
       });
 
-      setAnalysisResult(response.data);
+      console.log('API Response:', response);
+      console.log('Response Data:', response.data);
+      
+      if (response.data && response.status === 200) {
+        setAnalysisResult(response.data);
+      } else {
+        setError('予期しないレスポンス形式です');
+      }
     } catch (err) {
-      setError(err.response?.data?.error || '解析中にエラーが発生しました');
+      console.error('API Error:', err);
+      console.error('Response:', err.response);
+      
+      if (err.response?.data?.error) {
+        setError(err.response.data.error);
+      } else if (err.response?.status === 200 && err.response?.data) {
+        // 成功レスポンスだが何らかの理由でエラーとして扱われた場合
+        setAnalysisResult(err.response.data);
+      } else {
+        setError(`解析中にエラーが発生しました: ${err.message}`);
+      }
     } finally {
       setIsAnalyzing(false);
     }
