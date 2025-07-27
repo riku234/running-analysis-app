@@ -28,7 +28,10 @@ function App() {
     const formData = new FormData();
     formData.append('video', selectedFile);
 
-    const apiUrl = process.env.REACT_APP_API_URL || 'https://running-analysis-api.onrender.com';
+    // API URL設定（複数のフォールバック）
+    const apiUrl = process.env.REACT_APP_API_URL || 
+                   'https://running-analysis-api.onrender.com' ||
+                   'https://running-analysis-app.onrender.com';
     
     try {
       const response = await axios.post(`${apiUrl}/api/analyze/`, formData, {
