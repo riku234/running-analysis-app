@@ -122,11 +122,35 @@ if DEBUG:
     ]
 else:
     CORS_ALLOWED_ORIGINS = [
+        "https://running-analysis-frontend-v2.onrender.com",
         "https://running-analysis-frontend.onrender.com",
         "https://running-analysis-api.onrender.com",
+        "https://running-analysis-app.onrender.com",
     ]
 
 CORS_ALLOW_CREDENTIALS = True
+
+# より柔軟なCORS設定（開発・本番両対応）
+CORS_ALLOW_ALL_ORIGINS = False
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+]
+CORS_ALLOW_METHODS = [
+    'DELETE',
+    'GET',
+    'OPTIONS',
+    'PATCH',
+    'POST',
+    'PUT',
+]
 
 # ファイルアップロード設定
 FILE_UPLOAD_MAX_MEMORY_SIZE = 100 * 1024 * 1024  # 100MB
