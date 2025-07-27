@@ -9,7 +9,7 @@ from rest_framework.decorators import api_view, parser_classes
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.response import Response
 from rest_framework import status
-from .services import analyze_run_basics, analyze_run_basic_opencv_only
+from .services import analyze_run_basics, analyze_run_basic_opencv_only, MEDIAPIPE_AVAILABLE
 import logging
 
 # ログ設定
@@ -55,18 +55,25 @@ def analyze_running_video(request):
             temp_file_path = temp_file.name
         
         try:
-            # 動画解析の実行（MediaPipe優先、フォールバック付き）
+            # 動画解析の実行（環境に応じて最適な手法を選択）
             logger.info(f"動画解析を開始: {video_file.name}")
             
-            try:
-                # MediaPipeを使用した高精度解析を試行
-                analysis_result = analyze_run_basics(temp_file_path)
-                logger.info(f"MediaPipe解析完了: {analysis_result}")
-            except (ImportError, Exception) as mediapipe_error:
-                # MediaPipeが利用できない場合はOpenCVのみの解析を使用
-                logger.warning(f"MediaPipe解析失敗、OpenCVフォールバックを使用: {str(mediapipe_error)}")
+            if MEDIAPIPE_AVAILABLE:
+                try:
+                    # MediaPipeを使用した高精度解析
+                    analysis_result = analyze_run_basics(temp_file_path)
+                    logger.info(f"MediaPipe解析完了: {analysis_result}")
+                except Exception as mediapipe_error:
+                    # MediaPipe解析でエラーが発生した場合のフォールバック
+                    logger.warning(f"MediaPipe解析失敗、OpenCVフォールバックを使用: {str(mediapipe_error)}")
+                    analysis_result = analyze_run_basic_opencv_only(temp_file_path)
+                    analysis_result["note"] = "MediaPipe解析でエラーが発生したため、OpenCVベースの簡易解析を使用しました"
+                    logger.info(f"OpenCV解析完了: {analysis_result}")
+            else:
+                # MediaPipeが利用できない環境では最初からOpenCV解析を使用
+                logger.info("MediaPipeが利用できません。OpenCVベースの解析を使用します。")
                 analysis_result = analyze_run_basic_opencv_only(temp_file_path)
-                analysis_result["note"] = "OpenCVベースの簡易解析を使用しました"
+                analysis_result["note"] = "この環境ではMediaPipeが利用できないため、OpenCVベースの簡易解析を使用しました"
                 logger.info(f"OpenCV解析完了: {analysis_result}")
             
             # 結果を返す

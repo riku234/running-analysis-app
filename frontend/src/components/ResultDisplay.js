@@ -6,8 +6,10 @@ import React from 'react';
  * @param {Object} props - コンポーネントのプロパティ
  * @param {number} props.step_count - 歩数
  * @param {number} props.average_lean_angle - 平均前傾角度
+ * @param {string} props.note - 解析方法の説明（オプション）
+ * @param {string} props.method - 使用された解析方法（オプション）
  */
-const ResultDisplay = ({ step_count, average_lean_angle }) => {
+const ResultDisplay = ({ step_count, average_lean_angle, note, method }) => {
   // データが存在しない場合の処理
   if (step_count === undefined && average_lean_angle === undefined) {
     return (
@@ -37,6 +39,19 @@ const ResultDisplay = ({ step_count, average_lean_angle }) => {
         </div>
       </div>
       
+      {/* 解析方法の表示 */}
+      {(note || method) && (
+        <div className="analysis-info">
+          <h3>解析方法</h3>
+          {note && <p className="analysis-note">{note}</p>}
+          {method && (
+            <p className="analysis-method">
+              使用手法: {method === 'opencv_basic' ? 'OpenCVベース解析' : 'MediaPipe高精度解析'}
+            </p>
+          )}
+        </div>
+      )}
+
       {/* 解析結果の解釈ヒント */}
       <div className="result-tips">
         <h3>結果の見方</h3>

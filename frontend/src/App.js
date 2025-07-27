@@ -87,6 +87,8 @@ function App() {
           <ResultDisplay
             step_count={analysisResult.step_count}
             average_lean_angle={analysisResult.average_lean_angle}
+            note={analysisResult.note}
+            method={analysisResult.method}
           />
         )}
       </main>

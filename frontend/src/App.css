@@ -126,6 +126,32 @@
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
 }
 
+.analysis-info {
+  background: rgba(102, 126, 234, 0.1);
+  border-radius: 15px;
+  padding: 1.5rem;
+  margin: 1.5rem 0;
+  border-left: 4px solid #667eea;
+}
+
+.analysis-info h3 {
+  color: #667eea;
+  margin-top: 0;
+  font-size: 1.2rem;
+}
+
+.analysis-note {
+  margin: 0.5rem 0;
+  font-style: italic;
+  color: #555;
+}
+
+.analysis-method {
+  margin: 0.5rem 0;
+  font-weight: bold;
+  color: #667eea;
+}
+
 .result-display h2 {
   color: #667eea;
   margin-top: 0;

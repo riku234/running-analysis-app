@@ -5,9 +5,8 @@ services:
     env: python
     plan: free
     buildCommand: |
-      apt-get update && apt-get install -y libgl1-mesa-glx libglib2.0-0 libsm6 libxext6 libxrender-dev libgomp1 libgstreamer1.0-0 libgstreamer-plugins-base1.0-0
       pip install --upgrade pip
-      pip install -r requirements.txt
+      pip install -r requirements-light.txt
       python manage.py collectstatic --noinput
       python manage.py migrate
     startCommand: |
