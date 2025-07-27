@@ -6,9 +6,9 @@ services:
     plan: free
     buildCommand: |
       pip install --upgrade pip
-      pip install -r requirements.txt
+      pip install -r requirements-minimal.txt
       python manage.py collectstatic --noinput
-      python manage.py migrate
+      python manage.py migrate --run-syncdb
     startCommand: |
       gunicorn running_analysis_project.wsgi:application --bind 0.0.0.0:$PORT
     envVars:
@@ -29,11 +29,14 @@ services:
     plan: free
     buildCommand: |
       cd frontend
-      npm ci
+      ls -la public/
+      npm ci --legacy-peer-deps
       npm run build
     startCommand: |
       cd frontend
       npx serve -s build -p $PORT
     envVars:
+      - key: NODE_VERSION
+        value: "18"
       - key: REACT_APP_API_URL
         value: https://running-analysis-api.onrender.com 
