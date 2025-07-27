@@ -28,7 +28,6 @@ services:
     env: node
     plan: free
     buildCommand: |
-      ls -la frontend/public/
       cd frontend
       npm install --legacy-peer-deps
       npm run build
