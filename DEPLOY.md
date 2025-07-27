@@ -147,7 +147,7 @@ services:
    **解決方法**:
    - `requirements-light.txt` を使用（MediaPipe除外版）
      ```bash
-     Build Command: pip install -r requirements-light.txt && python manage.py collectstatic --noinput && python manage.py migrate
+     Build Command: pip install --upgrade pip && pip install -r requirements.txt && python manage.py collectstatic --noinput && python manage.py migrate
      ```
    - または、Pythonバージョンを確認（`runtime.txt`で`python-3.9.18`指定）
    - システム依存関係をビルドコマンドに追加:
