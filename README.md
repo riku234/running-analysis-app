@@ -54,14 +54,17 @@ MediaPipeを使用してランニング動画から歩数と体幹の前傾角�
 
 ### 1. バックエンド (Django)
 
+#### 💻 **ローカル開発環境（MediaPipe対応）**
+
 ```bash
 # 仮想環境の作成と有効化
 python -m venv venv
 source venv/bin/activate  # Linux/Mac
 # venv\Scripts\activate   # Windows
 
-# 依存関係のインストール
-pip install -r requirements.txt
+# 開発用依存関係のインストール（MediaPipe含む）
+pip install --upgrade pip
+pip install -r requirements-dev.txt
 
 # データベースの初期化
 python manage.py migrate
@@ -69,6 +72,17 @@ python manage.py migrate
 # 開発サーバーの起動
 python manage.py runserver
 ```
+
+#### ☁️ **本番デプロイ用（MediaPipe除外）**
+
+```bash
+# 本番デプロイ用依存関係のインストール
+pip install -r requirements.txt
+```
+
+**💡 環境の使い分け**:
+- **`requirements-dev.txt`**: ローカル開発用（MediaPipe高精度解析）
+- **`requirements.txt`**: 本番デプロイ用（OpenCVベース解析）
 
 ### 2. フロントエンド (React)
 
