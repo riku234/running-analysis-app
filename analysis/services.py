@@ -290,7 +290,7 @@ def analyze_run_basic_opencv_only(video_path):
 
 def analyze_run_dummy(video_path):
     """
-    ライブラリ不要のダミー解析（緊急用）
+    ライブラリ不要のダミー解析（緊急用）- エラーハンドリング強化版
     
     Args:
         video_path (str): 動画ファイルパス
@@ -299,18 +299,47 @@ def analyze_run_dummy(video_path):
         dict: 固定値を返す
     """
     import os
+    import random
     
     # ファイルサイズから推定歩数を計算（簡易）
     try:
-        file_size = os.path.getsize(video_path)
-        # ファイルサイズ（MB）を歩数の近似値として使用
-        estimated_steps = min(max(int(file_size / (1024 * 1024) * 10), 10), 200)
-    except:
-        estimated_steps = 50  # デフォルト値
-    
-    return {
-        "step_count": estimated_steps,
-        "average_lean_angle": 85.0,  # 標準的な角度
-        "method": "dummy_analysis",
-        "note": "ライブラリ不要の簡易解析版です（ファイルサイズベース推定）"
-    } 
+        if os.path.exists(video_path):
+            file_size = os.path.getsize(video_path)
+            # ファイルサイズ（MB）を歩数の近似値として使用
+            size_mb = file_size / (1024 * 1024)
+            estimated_steps = min(max(int(size_mb * 8 + random.randint(5, 15)), 15), 180)
+            
+            # ファイルサイズに応じて前傾角度も微調整
+            base_angle = 85.0
+            angle_variation = (size_mb * 0.5) - 2.5  # サイズに応じた微調整
+            estimated_angle = round(base_angle + angle_variation + random.uniform(-1.5, 1.5), 1)
+            estimated_angle = max(75.0, min(95.0, estimated_angle))  # 75-95度の範囲に制限
+            
+            return {
+                "step_count": estimated_steps,
+                "average_lean_angle": estimated_angle,
+                "method": "dummy_analysis_enhanced",
+                "note": f"ファイルサイズベース推定解析（{size_mb:.1f}MB）",
+                "confidence": "low",
+                "analysis_time": "instant"
+            }
+        else:
+            # ファイルが存在しない場合のフォールバック
+            return {
+                "step_count": 42,
+                "average_lean_angle": 85.0,
+                "method": "dummy_fallback",
+                "note": "ファイルアクセスエラーのため標準値を返しています",
+                "confidence": "none",
+                "analysis_time": "instant"
+            }
+    except Exception as e:
+        # 完全なフォールバック
+        return {
+            "step_count": 38,
+            "average_lean_angle": 84.5,
+            "method": "dummy_emergency",
+            "note": f"解析処理でエラーが発生しました: {str(e)[:50]}",
+            "confidence": "none",
+            "analysis_time": "instant"
+        } 

@@ -37,6 +37,16 @@ def analyze_running_video(request):
         
         video_file = request.FILES['video']
         
+        # ファイルサイズチェック (50MB制限)
+        max_size = 50 * 1024 * 1024  # 50MB
+        if video_file.size > max_size:
+            return Response({
+                "error": "ファイルサイズが大きすぎます",
+                "max_size_mb": 50,
+                "uploaded_size_mb": round(video_file.size / (1024 * 1024), 2),
+                "message": "50MB以下のファイルをアップロードしてください"
+            }, status=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE)
+        
         # ファイル形式のチェック
         allowed_extensions = ['.mp4', '.avi', '.mov', '.mkv', '.wmv']
         file_extension = os.path.splitext(video_file.name)[1].lower()
@@ -88,9 +98,26 @@ def analyze_running_video(request):
             else:
                 # ライブラリが利用できない環境では最初からダミー解析を使用
                 logger.info("OpenCV/MediaPipeが利用できません。簡易推定解析を使用します。")
-                analysis_result = analyze_run_dummy(temp_file_path)
-                analysis_result["note"] = "この環境ではOpenCV/MediaPipeが利用できないため、簡易推定解析を使用しました"
-                logger.info(f"ダミー解析完了: {analysis_result}")
+                try:
+                    analysis_result = analyze_run_dummy(temp_file_path)
+                    analysis_result["note"] = "この環境ではOpenCV/MediaPipeが利用できないため、簡易推定解析を使用しました"
+                    logger.info(f"ダミー解析完了: {analysis_result}")
+                except Exception as dummy_error:
+                    # ダミー解析でもエラーが発生した場合の最終フォールバック
+                    logger.error(f"ダミー解析でもエラーが発生: {str(dummy_error)}")
+                    analysis_result = {
+                        "step_count": 50,
+                        "average_lean_angle": 85.0,
+                        "method": "emergency_fallback",
+                        "note": f"解析処理でエラーが発生したため、標準値を返しています。ファイル名: {video_file.name}",
+                        "error_details": str(dummy_error)[:200],
+                        "file_info": {
+                            "name": video_file.name,
+                            "size_bytes": video_file.size,
+                            "size_mb": round(video_file.size / (1024 * 1024), 2)
+                        }
+                    }
+                    logger.info(f"緊急フォールバック完了: {analysis_result}")
             
             # 結果を返す
             return Response(analysis_result, status=status.HTTP_200_OK)
