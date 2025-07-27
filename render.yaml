@@ -1,0 +1,39 @@
+services:
+  # バックエンド（Django API）
+  - type: web
+    name: running-analysis-api
+    env: python
+    plan: free
+    buildCommand: |
+      pip install --upgrade pip
+      pip install -r requirements.txt
+      python manage.py collectstatic --noinput
+      python manage.py migrate
+    startCommand: |
+      gunicorn running_analysis_project.wsgi:application --bind 0.0.0.0:$PORT
+    envVars:
+      - key: DJANGO_SETTINGS_MODULE
+        value: running_analysis_project.settings
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: "False"
+      - key: ALLOWED_HOSTS
+        value: "*"
+    healthCheckPath: /api/health/
+    
+  # フロントエンド（React）
+  - type: web
+    name: running-analysis-frontend
+    env: node
+    plan: free
+    buildCommand: |
+      cd frontend
+      npm ci
+      npm run build
+    startCommand: |
+      cd frontend
+      npx serve -s build -p $PORT
+    envVars:
+      - key: REACT_APP_API_URL
+        value: https://running-analysis-api.onrender.com 

@@ -5,12 +5,12 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-your-secret-key-here-change-in-production'
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-your-secret-key-here-change-in-production')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', '0.0.0.0']
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1,0.0.0.0').split(',')
 
 # Application definition
 INSTALLED_APPS = [
@@ -28,6 +28,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -110,10 +111,16 @@ REST_FRAMEWORK = {
 }
 
 # CORS settings (フロントエンドとの連携用)
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",  # React開発サーバー
-    "http://127.0.0.1:3000",
-]
+if DEBUG:
+    CORS_ALLOWED_ORIGINS = [
+        "http://localhost:3000",  # React開発サーバー
+        "http://127.0.0.1:3000",
+    ]
+else:
+    CORS_ALLOWED_ORIGINS = [
+        "https://running-analysis-frontend.onrender.com",
+        "https://running-analysis-api.onrender.com",
+    ]
 
 CORS_ALLOW_CREDENTIALS = True
 

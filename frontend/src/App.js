@@ -28,8 +28,10 @@ function App() {
     const formData = new FormData();
     formData.append('video', selectedFile);
 
+    const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+    
     try {
-      const response = await axios.post('http://localhost:8000/api/analyze/', formData, {
+      const response = await axios.post(`${apiUrl}/api/analyze/`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
