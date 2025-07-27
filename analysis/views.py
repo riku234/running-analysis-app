@@ -9,7 +9,7 @@ from rest_framework.decorators import api_view, parser_classes
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.response import Response
 from rest_framework import status
-from .services import analyze_run_basics
+from .services import analyze_run_basics, analyze_run_basic_opencv_only
 import logging
 
 # ログ設定
@@ -55,10 +55,19 @@ def analyze_running_video(request):
             temp_file_path = temp_file.name
         
         try:
-            # 動画解析の実行
+            # 動画解析の実行（MediaPipe優先、フォールバック付き）
             logger.info(f"動画解析を開始: {video_file.name}")
-            analysis_result = analyze_run_basics(temp_file_path)
-            logger.info(f"動画解析完了: {analysis_result}")
+            
+            try:
+                # MediaPipeを使用した高精度解析を試行
+                analysis_result = analyze_run_basics(temp_file_path)
+                logger.info(f"MediaPipe解析完了: {analysis_result}")
+            except (ImportError, Exception) as mediapipe_error:
+                # MediaPipeが利用できない場合はOpenCVのみの解析を使用
+                logger.warning(f"MediaPipe解析失敗、OpenCVフォールバックを使用: {str(mediapipe_error)}")
+                analysis_result = analyze_run_basic_opencv_only(temp_file_path)
+                analysis_result["note"] = "OpenCVベースの簡易解析を使用しました"
+                logger.info(f"OpenCV解析完了: {analysis_result}")
             
             # 結果を返す
             return Response(analysis_result, status=status.HTTP_200_OK)

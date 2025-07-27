@@ -140,8 +140,20 @@ services:
 ### よくある問題
 
 1. **MediaPipeのインストールエラー**
-   - `opencv-python-headless` を使用（GUI不要）
-   - システム依存関係の確認
+   ```
+   ERROR: Could not find a version that satisfies the requirement mediapipe
+   ```
+   
+   **解決方法**:
+   - `requirements-light.txt` を使用（MediaPipe除外版）
+     ```bash
+     Build Command: pip install -r requirements-light.txt && python manage.py collectstatic --noinput && python manage.py migrate
+     ```
+   - または、Pythonバージョンを確認（`runtime.txt`で`python-3.9.18`指定）
+   - システム依存関係をビルドコマンドに追加:
+     ```bash
+     apt-get update && apt-get install -y libgl1-mesa-glx libglib2.0-0 && pip install -r requirements.txt
+     ```
 
 2. **CORS エラー**
    - `CORS_ALLOWED_ORIGINS` の設定確認

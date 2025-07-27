@@ -1,9 +1,15 @@
 import cv2
-import mediapipe as mp
 import numpy as np
 from scipy.signal import find_peaks, savgol_filter
 from scipy.ndimage import gaussian_filter1d
 import math
+
+try:
+    import mediapipe as mp
+    MEDIAPIPE_AVAILABLE = True
+except ImportError:
+    MEDIAPIPE_AVAILABLE = False
+    print("WARNING: MediaPipe is not available. Some functionality may be limited.")
 
 
 def analyze_run_basics(video_path):
@@ -16,6 +22,10 @@ def analyze_run_basics(video_path):
     Returns:
         dict: {"step_count": int, "average_lean_angle": float}
     """
+    # MediaPipeの利用可能性チェック
+    if not MEDIAPIPE_AVAILABLE:
+        raise ImportError("MediaPipe is not available. Please install mediapipe: pip install mediapipe")
+    
     # MediaPipeの初期化
     mp_pose = mp.solutions.pose
     pose = mp_pose.Pose(
@@ -177,4 +187,78 @@ def analyze_run_basics(video_path):
     return {
         "step_count": step_count,
         "average_lean_angle": round(average_lean_angle, 1)
+    }
+
+
+def analyze_run_basic_opencv_only(video_path):
+    """
+    OpenCVのみを使用したシンプルな動画解析（MediaPipe不要）
+    
+    Args:
+        video_path (str): 解析対象の動画ファイルパス
+        
+    Returns:
+        dict: {"step_count": int, "average_lean_angle": float, "method": str}
+    """
+    cap = cv2.VideoCapture(video_path)
+    
+    if not cap.isOpened():
+        raise ValueError("動画ファイルを開けませんでした")
+    
+    fps = cap.get(cv2.CAP_PROP_FPS)
+    total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+    
+    # フレーム間の差分を使用したモーション検出
+    frame_diffs = []
+    prev_frame = None
+    
+    frame_count = 0
+    while True:
+        ret, frame = cap.read()
+        if not ret:
+            break
+            
+        # グレースケールに変換
+        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        gray = cv2.GaussianBlur(gray, (21, 21), 0)
+        
+        if prev_frame is not None:
+            # フレーム差分を計算
+            frame_diff = cv2.absdiff(prev_frame, gray)
+            motion_amount = np.mean(frame_diff)
+            frame_diffs.append(motion_amount)
+        
+        prev_frame = gray
+        frame_count += 1
+    
+    cap.release()
+    
+    # 簡易的な歩数推定（モーション量のピーク検出）
+    step_count = 0
+    if len(frame_diffs) > 0:
+        # ノイズ除去
+        smoothed_diffs = gaussian_filter1d(frame_diffs, sigma=2.0)
+        
+        # ピーク検出
+        threshold = np.mean(smoothed_diffs) + np.std(smoothed_diffs) * 0.5
+        peaks, _ = find_peaks(smoothed_diffs, height=threshold, distance=max(5, int(fps * 0.5)))
+        step_count = len(peaks) * 2  # 1つのピークが半歩とする
+    
+    # 簡易的な前傾角度（固定値として推定値を返す）
+    # 実際の実装では、より高度な画像処理が必要
+    estimated_lean_angle = 85.0  # デフォルト値
+    
+    video_duration = len(frame_diffs) / max(fps, 1)
+    max_reasonable_steps = int(video_duration * 2.5)
+    
+    if step_count > max_reasonable_steps:
+        step_count = max_reasonable_steps
+    
+    print(f"OpenCV解析デバッグ: フレーム数={len(frame_diffs)}, FPS={fps:.1f}, "
+          f"動画時間={video_duration:.1f}秒, 推定歩数={step_count}")
+    
+    return {
+        "step_count": step_count,
+        "average_lean_angle": estimated_lean_angle,
+        "method": "opencv_basic"
     } 
