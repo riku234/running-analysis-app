@@ -30,7 +30,7 @@ services:
     buildCommand: |
       cd frontend
       ls -la public/
-      npm ci --legacy-peer-deps
+      npm install --legacy-peer-deps
       npm run build
     startCommand: |
       cd frontend
