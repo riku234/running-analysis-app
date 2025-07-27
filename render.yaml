@@ -27,13 +27,12 @@ services:
     name: running-analysis-frontend
     env: node
     plan: free
+    rootDir: frontend
     buildCommand: |
-      cd frontend
       ls -la public/
       npm install --legacy-peer-deps
       npm run build
     startCommand: |
-      cd frontend
       npx serve -s build -p $PORT
     envVars:
       - key: NODE_VERSION
